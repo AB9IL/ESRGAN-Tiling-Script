@@ -1,13 +1,12 @@
-import sys
 import os.path
 import glob
 import cv2
 import numpy
 import torch
-import architecture
+import RRDBNet_arch as arch
 import math
 
-model_path = sys.argv[1]  			# models/RRDB_ESRGAN_x4.pth OR models/RRDB_PSNR_x4.pth
+model_path = 'models/RRDB_ESRGAN_x4.pth'  # models/RRDB_ESRGAN_x4.pth OR models/RRDB_PSNR_x4.pth
 device = torch.device('cuda')  		# if you want to run on CPU, change 'cuda' -> cpu
 
 inputDir = 'LR'						# Input directory
@@ -17,7 +16,7 @@ tileMargin = 5						# Size of the margins ( You may increase this value if seein
 upscalingAmount = 4					# Upscaling amount of the model
 
 def upscaleImage( model, device, img ):
-	#Transpose 
+	#Transpose
 	img = numpy.transpose( img[:, :, [2, 1, 0]], (2, 0, 1) )
 
 	imgTorch = torch.from_numpy( img ).float()
@@ -28,7 +27,7 @@ def upscaleImage( model, device, img ):
 	# Re-Transpose
 	return numpy.transpose(imgNumpy[[2, 1, 0], :, :], (1, 2, 0))
 
-model = architecture.RRDB_Net( 3, 3, 64, 23, gc=32, upscale=4, norm_type=None, act_type='leakyrelu', mode='CNA', res_scale=1, upsample_mode='upconv')
+model = arch.RRDBNet( 3, 3, 64, 23, gc=32)
 model.load_state_dict( torch.load( model_path ), strict=True )
 model.eval()
 for k, v in model.named_parameters():
@@ -86,4 +85,4 @@ for path in glob.glob( '{:s}/*'.format( inputDir ) ):
 	imgOutput = ( imgOutput * 255.0 ).round()
 
 	# Save result
-	cv2.imwrite( '{:s}/{:s}.png'.format( outputDir, filename ), imgOutput )
+	cv2.imwrite( '{:s}/{:s}_upscaled.png'.format( outputDir, filename ), imgOutput )
